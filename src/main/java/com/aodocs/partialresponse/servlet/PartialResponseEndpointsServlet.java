@@ -64,7 +64,7 @@ import com.google.common.collect.ImmutableList;
  * It supports two modes:<ul>
  * <li>If fields expression does not start with a /, the regular mode is enabled,
  * with very close behavior to
- * <a hreh="https://developers.google.com/discovery/v1/performance#partial-response">
+ * <a href="https://developers.google.com/discovery/v1/performance#partial-response">
  *     what is implemented in Google APIs</a></li>
  * <li>If fields expression starts with a /, the <a href="https://tools.ietf.org/html/rfc6901">JSON Pointer</a>
  * mode is enabled. It only allows a single node selection, and does not support wildcards</li>
