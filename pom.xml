@@ -34,7 +34,14 @@
         <antlr4.version>4.7.1</antlr4.version>
 
         <endpoints-framework.version>2.2.0</endpoints-framework.version>
+        <developerConnection />
     </properties>
+
+    <scm>
+        <developerConnection>${developerConnection}</developerConnection>
+        <connection>${developerConnection}</connection>
+      <tag>HEAD</tag>
+  </scm>
 
     <dependencies>
         <!--Utils-->
