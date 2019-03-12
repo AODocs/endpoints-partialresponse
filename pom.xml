@@ -33,7 +33,7 @@
         <jackson.version>2.9.8</jackson.version>
         <antlr4.version>4.7.1</antlr4.version>
 
-        <endpoints-framework.version>2.2.0</endpoints-framework.version>
+        <endpoints-framework.version>2.2.1</endpoints-framework.version>
     </properties>
 
     <dependencies>
@@ -71,6 +71,8 @@
             <groupId>com.google.endpoints</groupId>
             <artifactId>endpoints-framework</artifactId>
             <version>${endpoints-framework.version}</version>
+            <!--Let implementors use their own version (might use the -all artifact)-->
+            <scope>provided</scope>
         </dependency>
 
         <!--Testing-->
