@@ -161,7 +161,7 @@ public class FieldsExpressionNode {
 		
 		/**
 		 * Creates a new root node with the provided children.
-		 * Example: ofChildren("a", "b", "c") => root -> a, b, c
+		 * Example: ofChildren("a", "b", "c") ⇒ root → a, b, c
 		 *
 		 * @param childValues
 		 * @return the root node containing the children
@@ -176,7 +176,7 @@ public class FieldsExpressionNode {
 		
 		/**
 		 * Creates a new root node with the provided "branch".
-		 * Example: ofBranch("a", "b", "c") => root -> a -> b -> c
+		 * Example: ofBranch("a", "b", "c") ⇒ root → a → b → c
 		 *
 		 * @param branchValues
 		 * @return the root node containing the branch
