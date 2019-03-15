@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionTree;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -104,7 +105,7 @@ public class ResourceTreeRepositoryTest {
 				{ DRIVE_FILE, "lastModifyingUser/email", false },
 				//wildcards
 				{ DRIVE_FILE, "*/canAddChildren", true },
-				{ DRIVE_FILE, "capabilities/canAddChildren/*", false }, //no additional sublevel
+				{ DRIVE_FILE, "capabilities/canAddChildren/*", true }, //no additional sublevel
 				{ DRIVE_FILE, "imageMediaMetadata/*/altitude", true },
 				{ DRIVE_FILE, "imageMediaMetadat/*/doesNotExist", false },
 				//any
@@ -155,8 +156,9 @@ public class ResourceTreeRepositoryTest {
 	
 	@Test
 	public void testContainment() {
-		FieldsExpressionTree resourceTree = RESOURCE_TREES.get(resourceName);
-		Assert.assertEquals(shouldMatch, resourceTree.contains(FieldsExpressionTree.parse(fieldsExpression)));
+		FieldsExpressionTree resourceSchema = RESOURCE_TREES.get(resourceName);
+		FieldsExpression parsedExpression = FieldsExpression.parse(fieldsExpression);
+		Assert.assertEquals(shouldMatch, parsedExpression.isValidAgainst(resourceSchema));
 	}
 	
 }

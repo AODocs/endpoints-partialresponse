@@ -26,6 +26,7 @@ import java.io.StringWriter;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionTree;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -36,7 +37,7 @@ public class PartialObjectWriterTest {
 	@Test
 	public void testWriter() throws IOException {
 		StringWriter output = new StringWriter();
-		FieldsExpressionTree filter = FieldsExpressionTree.parse("b");
+		FieldsExpressionTree filter = FieldsExpression.parse("b").getFilterTree();
 		new PartialObjectWriter(new ObjectMapper().writer(), filter).writeValue(output, new SimpleObject());
 		Assert.assertEquals("{\"b\":\"b\"}", output.toString());
 	}
@@ -44,7 +45,7 @@ public class PartialObjectWriterTest {
 	@Test
 	public void testOutputStream() throws IOException {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		FieldsExpressionTree filter = FieldsExpressionTree.parse("b");
+		FieldsExpressionTree filter = FieldsExpression.parse("b").getFilterTree();
 		new PartialObjectWriter(new ObjectMapper().writer(), filter).writeValue(output, new SimpleObject());
 		Assert.assertEquals("{\"b\":\"b\"}", new String(output.toByteArray()));
 	}
@@ -52,7 +53,7 @@ public class PartialObjectWriterTest {
 	@Test
 	public void testSequenceWriter() throws IOException {
 		StringWriter output = new StringWriter();
-		FieldsExpressionTree filter = FieldsExpressionTree.parse("b");
+		FieldsExpressionTree filter = FieldsExpression.parse("b").getFilterTree();
 		ObjectWriter writer = new ObjectMapper().writer();
 		SequenceWriter sequenceWriter = new PartialObjectWriter(writer, filter)
 				.writeValues(output);

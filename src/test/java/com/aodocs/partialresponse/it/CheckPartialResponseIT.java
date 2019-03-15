@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionTree;
+import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.aodocs.partialresponse.json.PartialJsonCopier;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -84,6 +84,8 @@ public class CheckPartialResponseIT extends DiscoveryApiIntegrationTest {
 				{ "*/About/*,schemas/About/id" },
 				{ "parameters/alt/*,parameters/alt/*/enum" },
 				{ "resources/changes/methods/list/*,resources/changes/methods/list/*/response" },
+				{ "baseUrl/*" },
+				{ "schemas/*/id/*" },
 		});
 	}
 	
@@ -98,7 +100,7 @@ public class CheckPartialResponseIT extends DiscoveryApiIntegrationTest {
 	@Test
 	public void check() throws IOException {
 		String filtered = loadDriveV3Discovery(fields).toString();
-		new PartialJsonCopier(jp, jg, FieldsExpressionTree.parse(fields)).copyAndClose();
+		new PartialJsonCopier(jp, jg, FieldsExpression.parse(fields).getFilterTree()).copyAndClose();
 		Assert.assertEquals(filtered, output.toString());
 	}
 	
