@@ -24,8 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
-
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -57,9 +55,8 @@ public class FieldsExpressionNode {
 	 */
 	public ImmutableMap<String, FieldsExpressionNode> getChildMap() {
 		return Maps.uniqueIndex(children, new Function<FieldsExpressionNode, String>() {
-			@NullableDecl
 			@Override
-			public String apply(@NullableDecl FieldsExpressionNode input) {
+			public String apply(FieldsExpressionNode input) {
 				return input.value;
 			}
 		});
