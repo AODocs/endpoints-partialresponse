@@ -32,7 +32,9 @@ abstract class DiscoveryApiIntegrationTest {
 			.setApplicationName("endpoints-partialresponse").build();
 	
 	static RestDescription loadDriveV3Discovery(String fields) throws IOException {
-		return CLIENT.apis().getRest("drive", "v3").setFields(fields).execute();
+		RestDescription restDescription = CLIENT.apis().getRest("drive", "v3").setFields(fields).execute();
+		restDescription.setEtag(null);// for some reason (caching ?), the etag field may vary depending on the input fields
+		return restDescription;
 	}
 	
 }

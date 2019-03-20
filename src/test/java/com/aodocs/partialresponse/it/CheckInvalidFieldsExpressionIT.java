@@ -20,7 +20,6 @@
 package com.aodocs.partialresponse.it;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -31,6 +30,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.aodocs.partialresponse.discovery.ResourceTreeRepositoryTest;
+import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionTree;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 
@@ -54,6 +54,8 @@ public class CheckInvalidFieldsExpressionIT extends DiscoveryApiIntegrationTest 
 				{ "name/doesNotExist" },
 				{ "labels/doesNotExist" },
 				{ "parameters/id/doesNotExist" },
+				{ "*,doesNotExist" },
+				{ "parameters/*,parameters/*/doesNotExist" },
 		});
 	}
 	
@@ -65,11 +67,11 @@ public class CheckInvalidFieldsExpressionIT extends DiscoveryApiIntegrationTest 
 	public void check() throws IOException {
 		try {
 			loadDriveV3Discovery(invalidFieldsExpression);
-			fail();
+			throw new IllegalStateException("Wrong invalid fields expression assumption for : '" + invalidFieldsExpression + "'");
 		} catch (GoogleJsonResponseException e) {
 			//expected to fail
 		}
-		assertFalse(REST_DESCRIPTION_SCHEMA.contains(FieldsExpressionTree.parse(invalidFieldsExpression)));
+		assertFalse(FieldsExpression.parse(invalidFieldsExpression).isValidAgainst(REST_DESCRIPTION_SCHEMA));
 	}
 	
 }

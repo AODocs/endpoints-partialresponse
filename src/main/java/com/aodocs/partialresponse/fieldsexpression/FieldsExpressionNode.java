@@ -27,6 +27,7 @@ import java.util.Objects;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ForwardingCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -68,6 +69,20 @@ public class FieldsExpressionNode {
 	
 	public boolean isLeaf() {
 		return Iterables.isEmpty(children);
+	}
+	
+	/**
+	 * @return true if this node is either :
+	 * - a direct leaf
+	 * - or a transitive leaf (ie: has a wildcard+transitiveLeaf child)
+	 */
+	public boolean isTransitiveLeaf() {
+		return isLeaf() || FluentIterable.from(children).anyMatch(new Predicate<FieldsExpressionNode>() {
+			@Override
+			public boolean apply(@NullableDecl FieldsExpressionNode child) {
+				return child.isWildcard() && child.isTransitiveLeaf();
+			}
+		});
 	}
 	
 	public boolean isWildcard() {

@@ -28,7 +28,7 @@ import org.junit.runners.Parameterized;
 import com.google.common.collect.ImmutableList;
 
 @RunWith(Parameterized.class)
-public class FieldsExpressionTreeInvalidTest {
+public class FieldsExpressionInvalidTest {
 	
 	@Parameterized.Parameters(name = "{index}: {0}")
 	public static Collection<String> data() {
@@ -43,13 +43,13 @@ public class FieldsExpressionTreeInvalidTest {
 	
 	private final String expression;
 	
-	public FieldsExpressionTreeInvalidTest(String expression) {
+	public FieldsExpressionInvalidTest(String expression) {
 		this.expression = expression;
 	}
 	
 	@Test(expected = FieldExpressionParsingException.class)
 	public void testParsing() {
-		FieldsExpressionTree.parse(expression);
+		FieldsExpression.parse(expression);
 	}
 	
 }

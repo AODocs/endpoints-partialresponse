@@ -23,6 +23,7 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
 import com.aodocs.partialresponse.discovery.ResourceTreeRepository;
+import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionTree;
 import com.aodocs.partialresponse.json.JsonPointerJsonFactory;
 import com.aodocs.partialresponse.json.PartialResponseJsonFactory;
@@ -166,12 +167,12 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 						throw new BadRequestException("Invalid fields parameter '" + fieldsParameterValue + "'", "invalidParameter", "global");
 					}
 				} else {
-					final FieldsExpressionTree fieldsExpressionTree = FieldsExpressionTree.parse(fieldsParameterValue);
+					final FieldsExpression fieldsExpression = FieldsExpression.parse(fieldsParameterValue);
 					if (resourceTreeRepositoryCache != null) {
 						FieldsExpressionTree resourceTree = resourceTreeRepositoryCache
 								.getUnchecked(methodConfig.getApiConfig().getApiKey())
 								.getResourceTree(Types.getSimpleName(method.getReturnType(), serializationConfig));
-						if (!resourceTree.contains(fieldsExpressionTree)) {
+						if (!fieldsExpression.isValidAgainst(resourceTree)) {
 							//can't match exactly response from Google APIs, as we can't set location and locationType
 							throw new BadRequestException("Invalid field selection '" + fieldsParameterValue + "'", "invalidParameter", "global");
 						}
@@ -179,7 +180,7 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 					return new Function<JsonFactory, JsonFactory>() {
 						@Override
 						public JsonFactory apply(JsonFactory input) {
-							return new PartialResponseJsonFactory(input, fieldsExpressionTree);
+							return new PartialResponseJsonFactory(input, fieldsExpression.getFilterTree());
 						}
 					};
 				}

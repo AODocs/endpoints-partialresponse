@@ -154,6 +154,13 @@ public class PartialJsonCopyTest {
 		checkResult("{\"id\":1,\"text\":\"string\",\"boolean\":true,\"float\":1.3,\"nullable\":null,\"array\":[1,2,3],\"nestedObjects\":{\"object2\":{\"B\":\"b\"}},\"arrayOfArrays\":[[1,2],[3,4],[5,6]]}");
 	}
 	
+	@Test
+	public void testExtraWildcardAfterLeaf() throws IOException {
+		FieldsExpressionNode.Builder root = FieldsExpressionNode.Builder.ofBranch("id", "*");
+		newJsonFilteringCopier(jp, jg, root).copyAndClose();
+		checkResult("{\"id\":1}");
+	}
+	
 	private void checkResult(URL expected) throws IOException {
 		String expectedJson = Resources.toString(expected, StandardCharsets.UTF_8);
 		checkResult(expectedJson);
@@ -167,7 +174,7 @@ public class PartialJsonCopyTest {
 		);
 	}
 	
-	////// Theoritical tests that can't happen if property names are validated //////
+	////// Theoretical tests that can't happen if property names are validated //////
 	
 	@Test
 	public void testSecondLevelNoMatchFilter() throws IOException {

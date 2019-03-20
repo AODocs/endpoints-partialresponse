@@ -33,7 +33,7 @@ import org.junit.runners.Parameterized;
 import com.google.common.collect.ImmutableList;
 
 @RunWith(Parameterized.class)
-public class FieldsExpressionTreeTest {
+public class FieldsExpressionTest {
 	
 	@Parameterized.Parameters(name = "{index}: {0}")
 	public static Collection<Object[]> data() {
@@ -48,7 +48,7 @@ public class FieldsExpressionTreeTest {
 				{ "items", FieldsExpressionNode.Builder.ofBranch("items") },
 				{ "etag,items", FieldsExpressionNode.Builder.withChildren("etag", "items") },
 				{ "context/facets/label", FieldsExpressionNode.Builder.ofBranch("context", "facets", "label") },
-				{ "items/pagemap/*", FieldsExpressionNode.Builder.ofBranch("items", "pagemap", "*") },
+				{ "items/pagemap/*", FieldsExpressionNode.Builder.ofBranch("items", "pagemap") },
 				{ "items/pagemap/*/title", FieldsExpressionNode.Builder.ofBranch("items", "pagemap", "*", "title") },
 				{ "items(id)", FieldsExpressionNode.Builder.ofBranch("items", "id") },
 				{ "items/id", FieldsExpressionNode.Builder.ofBranch("items", "id") },
@@ -56,13 +56,14 @@ public class FieldsExpressionTreeTest {
 				{ "items/author/uri,items/title", nested },
 				{ "items(title,author/uri(a,b))", deepNested },
 				{ "items/title,items/author/uri/a,items/author/uri/b))", deepNested },
+				{ "items/id,items", FieldsExpressionNode.Builder.ofBranch("items") },
 		});
 	}
 	
 	private String input;
 	private FieldsExpressionTree expectedOutput;
 	
-	public FieldsExpressionTreeTest(String input, FieldsExpressionNode.Builder output) {
+	public FieldsExpressionTest(String input, FieldsExpressionNode.Builder output) {
 		this.input = input;
 		this.expectedOutput = new FieldsExpressionTree(output.getNode());
 	}
@@ -72,15 +73,20 @@ public class FieldsExpressionTreeTest {
 		EqualsVerifier.forClass(FieldsExpressionTree.class)
 				.withPrefabValues(FieldsExpressionNode.class,
 						expectedOutput.getRoot(),
-						FieldsExpressionNode.Builder.ofBranch("test").getNode()).verify();
+						FieldsExpressionNode.Builder.ofBranch("test").getNode())
+				.verify();
 	}
 	
 	@Test
 	public void testParsing() {
-		FieldsExpressionTree output = FieldsExpressionTree.parse(input);
-		System.out.println("actual: " + output.prettyPrint());
-		System.out.println("expected: " + expectedOutput.prettyPrint());
-		assertEquals(expectedOutput, output);
+		FieldsExpressionTree actualOutput = FieldsExpression.parse(input).getFilterTree();
+		assertEquals("Unexpected parsing output for '" + input + "':\n" + prettyDiff(actualOutput),
+				expectedOutput, actualOutput
+		);
+	}
+	
+	private String prettyDiff(FieldsExpressionTree output) {
+		return "actual: " + output.prettyPrint() + "\n expected: " + expectedOutput + "\n";
 	}
 	
 }

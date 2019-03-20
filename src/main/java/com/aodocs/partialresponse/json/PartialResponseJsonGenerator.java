@@ -66,7 +66,7 @@ class PartialResponseJsonGenerator extends AbstractFilteringGenerator {
 		@Override
 		public TokenFilter includeProperty(final String name) {
 			//leafs match anything below
-			if (filterContext.isLeaf()) {
+			if (filterContext.isTransitiveLeaf()) {
 				return TokenFilter.INCLUDE_ALL;
 			}
 			//build a new TokenFilter from matching children (including wildcards)
@@ -97,13 +97,15 @@ class PartialResponseJsonGenerator extends AbstractFilteringGenerator {
 		}
 		
 		/**
-		 * Include values only if there are no more filters to be applied downstream
+		 * Include values only if :
+		 * - there are no more filters to be applied downstream
+		 * - it is middle wildcard
 		 *
 		 * @return true if it is a leaf
 		 */
 		@Override
 		protected boolean _includeScalar() {
-			return filterContext.isLeaf() || filterContext.isWildcard();
+			return filterContext.isWildcard() || filterContext.isTransitiveLeaf();
 		}
 		
 		/**
