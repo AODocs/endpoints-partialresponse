@@ -67,6 +67,10 @@ class Parser {
 		this.allPaths = sanitizePaths(new PathExplodingVisitor().visit(expression));
 	}
 	
+	public FluentIterable<ImmutableList<String>> getAllPaths() {
+		return allPaths;
+	}
+	
 	/**
 	 * Ending wildcards are not needed : fieldA, fieldA / *, fieldA / * / * are equal
 	 *
@@ -87,10 +91,6 @@ class Parser {
 			return removeEndingWildcards(pathItems.subList(0, pathItems.size() - 1));
 		}
 		return pathItems;
-	}
-	
-	public FluentIterable<ImmutableList<String>> getAllPaths() {
-		return allPaths;
 	}
 	
 	/**

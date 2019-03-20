@@ -24,7 +24,7 @@ import java.util.Objects;
 import com.google.common.base.Strings;
 
 /**
- * Describes a fields expression for partial response, as described there: https://developers.google.com/drive/api/v3/performance#partial-response
+ * Describes a fields expression tree for partial response
  */
 public final class FieldsExpressionTree {
 	

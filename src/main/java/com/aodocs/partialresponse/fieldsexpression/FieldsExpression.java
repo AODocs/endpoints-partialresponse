@@ -29,6 +29,9 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
+/**
+ * Describes a fields expression for partial response, as described there: https://developers.google.com/drive/api/v3/performance#partial-response
+ */
 public final class FieldsExpression {
 	
 	public static FieldsExpression parse(String fieldsExpression) {
@@ -36,11 +39,11 @@ public final class FieldsExpression {
 	}
 	
 	private final String fieldExpression;
-	private final Parser parser;
+	private final FluentIterable<ImmutableList<String>> fieldsExpressionPaths;
 	
 	private FieldsExpression(String fieldsExpression) {
 		this.fieldExpression = fieldsExpression;
-		this.parser = new Parser(fieldsExpression);
+		this.fieldsExpressionPaths = new Parser(fieldsExpression).getAllPaths();
 	}
 	
 	public boolean isValidAgainst(final FieldsExpressionTree schema) {
@@ -52,8 +55,8 @@ public final class FieldsExpression {
 		});
 	}
 	
-	public FluentIterable<FieldsExpressionNode> asPathNodes() {
-		return this.parser.getAllPaths().transform(new Function<ImmutableList<String>, FieldsExpressionNode>() {
+	private FluentIterable<FieldsExpressionNode> asPathNodes() {
+		return fieldsExpressionPaths.transform(new Function<ImmutableList<String>, FieldsExpressionNode>() {
 			@Override
 			public FieldsExpressionNode apply(ImmutableList<String> path) {
 				FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
@@ -65,7 +68,7 @@ public final class FieldsExpression {
 	
 	public FieldsExpressionTree getFilterTree() {
 		FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
-		FluentIterable<ImmutableList<String>> filteredPaths = retainLivePaths(this.parser.getAllPaths());
+		FluentIterable<ImmutableList<String>> filteredPaths = retainLivePaths(fieldsExpressionPaths);
 		for (ImmutableList<String> livePath : filteredPaths) {
 			builder.getOrAddBranch(livePath);
 		}
@@ -101,7 +104,6 @@ public final class FieldsExpression {
 			}
 		});
 	}
-	
 	
 	@Override
 	public String toString() {
