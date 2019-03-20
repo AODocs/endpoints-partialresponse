@@ -30,7 +30,6 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionBaseVisitor;
 import com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionLexer;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -39,14 +38,19 @@ import com.google.common.collect.Iterables;
 /**
  * Generates a FilteringNode (root of a filtering tree) based on the parsing of a fields expression string.
  */
-@VisibleForTesting
 class Parser {
 	
 	private final String fieldsExpression;
-	private final FluentIterable<ImmutableList<String>> allPaths;
 	
-	Parser(String fieldsExpression) {
+	private Parser(String fieldsExpression) {
 		this.fieldsExpression = fieldsExpression;
+	}
+	
+	static FluentIterable<ImmutableList<String>> parse(String fieldsExpression) {
+		return new Parser(fieldsExpression).parse();
+	}
+	
+	private FluentIterable<ImmutableList<String>> parse() {
 		
 		//init Antlr
 		FieldsExpressionLexer lexer = new FieldsExpressionLexer(CharStreams.fromString(fieldsExpression));
@@ -64,11 +68,7 @@ class Parser {
 		}
 		
 		//explode expression to individual paths
-		this.allPaths = sanitizePaths(new PathExplodingVisitor().visit(expression));
-	}
-	
-	public FluentIterable<ImmutableList<String>> getAllPaths() {
-		return allPaths;
+		return sanitizePaths(new PathExplodingVisitor().visit(expression));
 	}
 	
 	/**

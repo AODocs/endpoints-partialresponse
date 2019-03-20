@@ -43,7 +43,7 @@ public final class FieldsExpression {
 	
 	private FieldsExpression(String fieldsExpression) {
 		this.fieldExpression = fieldsExpression;
-		this.fieldsExpressionPaths = new Parser(fieldsExpression).getAllPaths();
+		this.fieldsExpressionPaths = Parser.parse(fieldsExpression);
 	}
 	
 	public boolean isValidAgainst(final FieldsExpressionTree schema) {
