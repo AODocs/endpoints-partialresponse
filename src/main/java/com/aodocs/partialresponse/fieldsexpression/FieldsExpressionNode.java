@@ -79,7 +79,7 @@ public class FieldsExpressionNode {
 	public boolean isTransitiveLeaf() {
 		return isLeaf() || FluentIterable.from(children).anyMatch(new Predicate<FieldsExpressionNode>() {
 			@Override
-			public boolean apply(@NullableDecl FieldsExpressionNode child) {
+			public boolean apply(FieldsExpressionNode child) {
 				return child.isWildcard() && child.isTransitiveLeaf();
 			}
 		});
