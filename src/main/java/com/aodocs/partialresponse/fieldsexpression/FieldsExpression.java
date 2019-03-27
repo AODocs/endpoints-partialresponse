@@ -22,8 +22,6 @@ package com.aodocs.partialresponse.fieldsexpression;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -99,7 +97,7 @@ public final class FieldsExpression {
 		}
 		return paths.filter(new Predicate<ImmutableList<String>>() {
 			@Override
-			public boolean apply(@NullableDecl ImmutableList<String> path) {
+			public boolean apply(ImmutableList<String> path) {
 				return !redundantPaths.contains(path);
 			}
 		});
