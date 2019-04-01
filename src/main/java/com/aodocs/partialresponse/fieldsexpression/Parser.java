@@ -22,6 +22,8 @@ package com.aodocs.partialresponse.fieldsexpression;
 import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.MoreObjects.firstNonNull;
 
+import java.util.Collections;
+
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -102,7 +104,7 @@ class Parser {
 			final FluentIterable<String> selectionPath = FluentIterable.from(ctx.FIELDNAME()).transform(toStringFunction());
 			FluentIterable<ImmutableList<String>> childrenPaths = super.visitSelection(ctx);
 			if (childrenPaths.isEmpty()) {
-				return FluentIterable.of(selectionPath.toList());
+				return FluentIterable.from(Collections.singleton(selectionPath.toList()));
 			}
 			return childrenPaths.transform(new Function<ImmutableList<String>, ImmutableList<String>>() {
 				@Override
