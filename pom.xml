@@ -49,7 +49,7 @@
         <!--Fields expression parsing-->
         <dependency>
             <groupId>org.antlr</groupId>
-            <artifactId>antlr4</artifactId>
+            <artifactId>antlr4-runtime</artifactId>
             <version>${antlr4.version}</version>
         </dependency>
         <!--JSON handling-->
