@@ -29,6 +29,7 @@ abstract class DiscoveryApiIntegrationTest {
 	
 	private static final Discovery CLIENT = new Discovery.Builder(
 			Utils.getDefaultTransport(), Utils.getDefaultJsonFactory(), null)
+			.setRootUrl("https://www.googleapis.com/")
 			.setApplicationName("endpoints-partialresponse").build();
 	
 	static RestDescription loadDriveV3Discovery(String fields) throws IOException {
