@@ -48,7 +48,7 @@
     <dependencies>
         <!--Endpoints-->
         <dependency>
-            <groupId>com.google.endpoints</groupId>
+            <groupId>com.altirnao.endpoints</groupId>
             <artifactId>endpoints-framework</artifactId>
             <version>${endpoints-framework.version}</version>
             <!--Let implementors use their own version (might use the -all artifact)-->
@@ -95,6 +95,19 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <repository>
+            <id>artifactory</id>
+            <name>libs-release</name>
+            <url>https://aodocs.jfrog.io/aodocs/libs-release</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
