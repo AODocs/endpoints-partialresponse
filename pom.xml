@@ -4,7 +4,7 @@
 
     <groupId>com.aodocs.endpoints</groupId>
     <artifactId>endpoints-partialresponse</artifactId>
-    <version>1.4</version>
+    <version>1.5-SNAPSHOT</version>
 
     <name>Partial response support for Cloud Endpoints v2</name>
     <description>This project provides an implementation of EndpointsServlet with partial response support using "fields" parameter in Discovery-based APIs.</description>
@@ -26,7 +26,7 @@
         <connection>scm:git:${endpoints-partialresponse.scm.connection}</connection>
         <developerConnection>scm:git:${endpoints-partialresponse.scm.connection}</developerConnection>
         <url>${endpoints-partialresponse.scm.url}</url>
-        <tag>v1.4</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
