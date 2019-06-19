@@ -86,7 +86,7 @@ public class FieldsExpressionTest {
 	}
 	
 	private String prettyDiff(FieldsExpressionTree output) {
-		return "actual: " + output.prettyPrint() + "\n expected: " + expectedOutput + "\n";
+		return "actual: " + output.prettyPrint() + "\n expected: " + expectedOutput.prettyPrint() + "\n";
 	}
 	
 }

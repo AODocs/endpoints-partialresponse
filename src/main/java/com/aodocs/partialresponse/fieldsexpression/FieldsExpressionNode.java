@@ -23,11 +23,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ForwardingCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -55,12 +54,7 @@ public class FieldsExpressionNode {
 	 * @return current node's children indexed by their name
 	 */
 	public ImmutableMap<String, FieldsExpressionNode> getChildMap() {
-		return Maps.uniqueIndex(children, new Function<FieldsExpressionNode, String>() {
-			@Override
-			public String apply(FieldsExpressionNode input) {
-				return input.value;
-			}
-		});
+		return Maps.uniqueIndex(children, input -> input.value);
 	}
 	
 	public boolean isRoot() {
@@ -77,12 +71,7 @@ public class FieldsExpressionNode {
 	 * - or a transitive leaf (ie: has a wildcard+transitiveLeaf child)
 	 */
 	public boolean isTransitiveLeaf() {
-		return isLeaf() || FluentIterable.from(children).anyMatch(new Predicate<FieldsExpressionNode>() {
-			@Override
-			public boolean apply(FieldsExpressionNode child) {
-				return child.isWildcard() && child.isTransitiveLeaf();
-			}
-		});
+		return isLeaf() || streamChildren().anyMatch(child -> child.isWildcard() && child.isTransitiveLeaf());
 	}
 	
 	public boolean isWildcard() {
@@ -106,19 +95,13 @@ public class FieldsExpressionNode {
 			return true; //short circuit
 		}
 		if (Objects.equals(this.value, other.value) || isWildcard() || other.isWildcard()) {
-			return Iterables.all(other.children, new Predicate<FieldsExpressionNode>() {
-				@Override
-				public boolean apply(final FieldsExpressionNode otherChild) {
-					return Iterables.any(children, new Predicate<FieldsExpressionNode>() {
-						@Override
-						public boolean apply(FieldsExpressionNode ownChild) {
-							return ownChild.checkContainment(otherChild);
-						}
-					});
-				}
-			});
+			return other.streamChildren().allMatch(otherChild -> streamChildren().anyMatch(ownChild -> ownChild.checkContainment(otherChild)));
 		}
 		return false;
+	}
+	
+	private Stream<FieldsExpressionNode> streamChildren() {
+		return StreamSupport.stream(children.spliterator(), false);
 	}
 	
 	/**
@@ -258,7 +241,7 @@ public class FieldsExpressionNode {
 		 *
 		 * @param other the other node to merge
 		 */
-		public void merge(final FieldsExpressionNode other) {
+		public void merge(FieldsExpressionNode other) {
 			String value = other.value;
 			Preconditions.checkArgument(value == null, "Only root nodes can be merged");
 			Sets.SetView<String> sameNodes = Sets.intersection(node.getChildMap().keySet(), other.getChildMap().keySet());
@@ -270,7 +253,7 @@ public class FieldsExpressionNode {
 		 * Wraps the children iterable in a forwarding collection, so it is evaluated lazily.
 		 * This is necessary to handle cycles properly in the tree.
 		 */
-		private static Iterable<FieldsExpressionNode> lazyChildIterable(final FieldsExpressionNode node) {
+		private static Iterable<FieldsExpressionNode> lazyChildIterable(FieldsExpressionNode node) {
 			return new ForwardingCollection<FieldsExpressionNode>() {
 				@Override
 				protected Collection<FieldsExpressionNode> delegate() {

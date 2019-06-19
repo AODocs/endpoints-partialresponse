@@ -44,13 +44,10 @@ public final class FieldsExpressionTree {
 	 * @return the pretty printed tree
 	 */
 	public String prettyPrint() {
-		final StringBuilder output = new StringBuilder(getClass().getSimpleName() + "{\n");
-		root.walk(new FieldsExpressionNode.TreeWalker() {
-			@Override
-			public void walkNode(String value, int depth) {
-				if (depth > 0) {
-					output.append(Strings.repeat("-", depth - 1) + value + "\n");
-				}
+		StringBuilder output = new StringBuilder(getClass().getSimpleName() + "{\n");
+		root.walk((value, depth) -> {
+			if (depth > 0) {
+				output.append(Strings.repeat("-", depth - 1) + value + "\n");
 			}
 		});
 		output.append('}');
