@@ -19,17 +19,15 @@
  */
 package com.aodocs.partialresponse.json;
 
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionNode;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionTree;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.filter.TokenFilter;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
 
 /**
  * Wraps a JsonGenerator to add filtering of the JSON output
@@ -64,26 +62,13 @@ class PartialResponseJsonGenerator extends AbstractFilteringGenerator {
 		 * @return the new TokenFilter
 		 */
 		@Override
-		public TokenFilter includeProperty(final String name) {
+		public TokenFilter includeProperty(String name) {
 			//leafs match anything below
 			if (filterContext.isTransitiveLeaf()) {
 				return TokenFilter.INCLUDE_ALL;
 			}
 			//build a new TokenFilter from matching children (including wildcards)
-			return buildTokenFilter(FluentIterable.from(filterContext.getChildMap().values())
-					.filter(new Predicate<FieldsExpressionNode>() {
-						@Override
-						public boolean apply(FieldsExpressionNode node) {
-							return node.matches(name);
-						}
-					})
-					.transform(new Function<FieldsExpressionNode, FilteringNodeTokenFilter>() {
-						@Override
-						public FilteringNodeTokenFilter apply(FieldsExpressionNode node) {
-							return new FilteringNodeTokenFilter(node);
-						}
-					})
-					.toSet());
+			return buildTokenFilter(filterContext.getChildMap().values().stream().filter(node -> node.matches(name)).map(FilteringNodeTokenFilter::new).collect(Collectors.toSet()));
 		}
 		
 		private TokenFilter buildTokenFilter(Set<? extends TokenFilter> subFilters) {
@@ -120,16 +105,8 @@ class PartialResponseJsonGenerator extends AbstractFilteringGenerator {
 			}
 			
 			@Override
-			public TokenFilter includeProperty(final String name) {
-				return buildTokenFilter(FluentIterable.from(filters)
-						.transform(new Function<TokenFilter, TokenFilter>() {
-							@Override
-							public TokenFilter apply(TokenFilter tokenFilter) {
-								return tokenFilter.includeProperty(name);
-							}
-						})
-						.filter(Predicates.notNull())
-						.toSet());
+			public TokenFilter includeProperty(String name) {
+				return buildTokenFilter(filters.stream().map(tokenFilter -> tokenFilter.includeProperty(name)).filter(Objects::nonNull).collect(Collectors.toSet()));
 			}
 			
 		}

@@ -30,9 +30,6 @@ import org.junit.runners.Parameterized;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonParser;
 import com.google.api.services.discovery.model.DirectoryList;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.io.Resources;
 
 /**
@@ -47,32 +44,15 @@ public class LoadAllGoogleAPIsTest {
 		try (InputStream inputStream = Resources.getResource("googleapis/api-list.json").openStream()) {
 			JsonParser jsonParser = Utils.getDefaultJsonFactory().createJsonParser(inputStream);
 			DirectoryList directoryList = jsonParser.parse(DirectoryList.class);
-			return FluentIterable.from(directoryList.getItems())
-					.transform(new Function<DirectoryList.Items, String>() {
-						@Override
-						public String apply(DirectoryList.Items input) {
-							return "googleapis/" + input.getName() + "/" + input.getVersion().replace("_", "/") + "/" + input.getName() + "-api.json";
-						}
-					})
-					.filter(new Predicate<String>() {
-						@Override
-						public boolean apply(String input) {
-							try {
-								Resources.getResource(input);
-								return true;
-							} catch (Exception e) {
-								System.err.println(input + " is listed but does not exist");
-								return false;
-							}
-						}
-					})
-					.transform(new Function<String, URL>() {
-						@Override
-						public URL apply(String input) {
-							return Resources.getResource(input);
-						}
-					})
-					.toArray(URL.class);
+			return directoryList.getItems().stream().map(input -> "googleapis/" + input.getName() + "/" + input.getVersion().replace("_", "/") + "/" + input.getName() + "-api.json").filter(input -> {
+				try {
+					Resources.getResource(input);
+					return true;
+				} catch (Exception e) {
+					System.err.println(input + " is listed but does not exist");
+					return false;
+				}
+			}).map(Resources::getResource).toArray(URL[]::new);
 		}
 	}
 	

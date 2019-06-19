@@ -22,6 +22,10 @@ package com.aodocs.partialresponse.fieldsexpression;
 import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.MoreObjects.firstNonNull;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -30,8 +34,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionBaseVisitor;
 import com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionLexer;
-import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
+import com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionParser;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
@@ -46,19 +49,19 @@ class Parser {
 		this.fieldsExpression = fieldsExpression;
 	}
 	
-	static FluentIterable<ImmutableList<String>> parse(String fieldsExpression) {
+	static List<ImmutableList<String>> parse(String fieldsExpression) {
 		return new Parser(fieldsExpression).parse();
 	}
 	
-	private FluentIterable<ImmutableList<String>> parse() {
+	private List<ImmutableList<String>> parse() {
 		
 		//init Antlr
 		FieldsExpressionLexer lexer = new FieldsExpressionLexer(CharStreams.fromString(fieldsExpression));
-		com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionParser parser = new com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionParser(new BufferedTokenStream(lexer));
+		FieldsExpressionParser parser = new FieldsExpressionParser(new BufferedTokenStream(lexer));
 		parser.setErrorHandler(new BailErrorStrategy()); //throws ParseCancellationException
 		
 		//parse expression and handle errors
-		com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionParser.ExpressionContext expression;
+		FieldsExpressionParser.ExpressionContext expression;
 		try {
 			expression = parser.expression();
 		} catch (RecognitionException e) {
@@ -68,7 +71,7 @@ class Parser {
 		}
 		
 		//explode expression to individual paths
-		return sanitizePaths(new PathExplodingVisitor().visit(expression));
+		return sanitizePaths(new PathExplodingVisitor().visit(expression)).collect(Collectors.toList());
 	}
 	
 	/**
@@ -77,13 +80,8 @@ class Parser {
 	 * @param paths
 	 * @return sanitized paths
 	 */
-	private FluentIterable<ImmutableList<String>> sanitizePaths(final FluentIterable<ImmutableList<String>> paths) {
-		return paths.transform(new Function<ImmutableList<String>, ImmutableList<String>>() {
-			@Override
-			public ImmutableList<String> apply(ImmutableList<String> paths) {
-				return removeEndingWildcards(paths);
-			}
-		});
+	private Stream<ImmutableList<String>> sanitizePaths(Stream<ImmutableList<String>> paths) {
+		return paths.map(this::removeEndingWildcards);
 	}
 	
 	private ImmutableList<String> removeEndingWildcards(ImmutableList<String> pathItems) {
@@ -96,30 +94,27 @@ class Parser {
 	/**
 	 * This visitor will create a list of possible paths from a fields expression.
 	 */
-	private class PathExplodingVisitor extends FieldsExpressionBaseVisitor<FluentIterable<ImmutableList<String>>> {
+	private class PathExplodingVisitor extends FieldsExpressionBaseVisitor<Stream<ImmutableList<String>>> {
 		@Override
-		public FluentIterable<ImmutableList<String>> visitSelection(com.aodocs.partialresponse.fieldsexpression.parser.FieldsExpressionParser.SelectionContext ctx) {
-			final FluentIterable<String> selectionPath = FluentIterable.from(ctx.FIELDNAME()).transform(toStringFunction());
-			FluentIterable<ImmutableList<String>> childrenPaths = super.visitSelection(ctx);
+		public Stream<ImmutableList<String>> visitSelection(FieldsExpressionParser.SelectionContext ctx) {
+			ImmutableList<String> selectionPath = ctx.FIELDNAME().stream().map(toStringFunction()).collect(ImmutableList.toImmutableList());
+			List<ImmutableList<String>> childrenPaths = super.visitSelection(ctx).collect(Collectors.toList());
 			if (childrenPaths.isEmpty()) {
-				return FluentIterable.of(selectionPath.toList());
+				return Stream.of(selectionPath);
 			}
-			return childrenPaths.transform(new Function<ImmutableList<String>, ImmutableList<String>>() {
-				@Override
-				public ImmutableList<String> apply(ImmutableList<String> childPath) {
-					return selectionPath.append(childPath).toList();
-				}
-			});
+			return childrenPaths.stream()
+					.map(childPath -> Stream.concat(selectionPath.stream(), childPath.stream())
+					.collect(ImmutableList.toImmutableList()));
 		}
 		
 		@Override
-		protected FluentIterable<ImmutableList<String>> aggregateResult(
-				FluentIterable<ImmutableList<String>> aggregate, FluentIterable<ImmutableList<String>> nextResult) {
-			return nullToEmpty(aggregate).append(nullToEmpty(nextResult));
+		protected Stream<ImmutableList<String>> aggregateResult(
+				Stream<ImmutableList<String>> aggregate, Stream<ImmutableList<String>> nextResult) {
+			return Stream.concat(nullToEmpty(aggregate), nullToEmpty(nextResult));
 		}
 		
-		private FluentIterable<ImmutableList<String>> nullToEmpty(FluentIterable<ImmutableList<String>> aggregate) {
-			return firstNonNull(aggregate, FluentIterable.<ImmutableList<String>>of());
+		private Stream<ImmutableList<String>> nullToEmpty(Stream<ImmutableList<String>> aggregate) {
+			return firstNonNull(aggregate, Stream.<ImmutableList<String>>of());
 		}
 	}
 	

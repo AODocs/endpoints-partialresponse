@@ -19,6 +19,9 @@
  */
 package com.aodocs.partialresponse.servlet;
 
+import java.util.Optional;
+import java.util.function.Function;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
@@ -51,13 +54,10 @@ import com.google.api.server.spi.response.BadRequestException;
 import com.google.api.server.spi.response.RestResponseResultWriter;
 import com.google.api.server.spi.response.ResultWriter;
 import com.google.api.services.discovery.model.RestDescription;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -107,22 +107,11 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 	}
 	
 	private Boolean getBooleanInitParam(ServletConfig config, String name, boolean defaultValue) {
-		return Optional.fromNullable(config.getInitParameter(name)).transform(new Function<String, Boolean>() {
-			@Override
-			public Boolean apply(String input) {
-				return Boolean.parseBoolean(input);
-			}
-		}).or(defaultValue);
+		return Optional.ofNullable(config.getInitParameter(name)).map(Boolean::parseBoolean).orElse(defaultValue);
 	}
 	
 	private DiscoveryProvider createDiscoveryProvider() {
-		ImmutableList<ApiConfig> apiConfigs = FluentIterable.from(getSystemService().getEndpoints())
-				.transform(new Function<SystemService.EndpointNode, ApiConfig>() {
-					@Override
-					public ApiConfig apply(SystemService.EndpointNode input) {
-						return input.getConfig();
-					}
-				}).toList();
+		ImmutableList<ApiConfig> apiConfigs = getSystemService().getEndpoints().stream().map(SystemService.EndpointNode::getConfig).collect(ImmutableList.toImmutableList());
 		try {
 			TypeLoader typeLoader = new TypeLoader(getClass().getClassLoader());
 			return new CachingDiscoveryProvider(new LocalDiscoveryProvider(
@@ -135,7 +124,7 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 	}
 	
 	@Override
-	protected EndpointsMethodHandler createEndpointsMethodHandler(final EndpointMethod method, final ApiMethodConfig methodConfig) {
+	protected EndpointsMethodHandler createEndpointsMethodHandler(EndpointMethod method, ApiMethodConfig methodConfig) {
 		return new EndpointsMethodHandler(getInitParameters(), getServletContext(), method, methodConfig, getSystemService()) {
 			@Override
 			protected ResultWriter createResultWriter(EndpointsContext context, ApiSerializationConfig serializationConfig) throws ServiceException {
@@ -143,7 +132,7 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 				if (Strings.isNullOrEmpty(fieldsParameterValue)) {
 					return super.createResultWriter(context, serializationConfig);
 				}
-				final Function<JsonFactory, JsonFactory> jsonFactoryConfigurator = getConfigurator(fieldsParameterValue, serializationConfig);
+				Function<JsonFactory, JsonFactory> jsonFactoryConfigurator = getConfigurator(fieldsParameterValue, serializationConfig);
 				
 				return new RestResponseResultWriter(context.getResponse(), serializationConfig, StandardParameters.shouldPrettyPrint(context), getInitParameters().isAddContentLength(), getInitParameters().isExceptionCompatibilityEnabled()) {
 					@Override
@@ -154,20 +143,15 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 			}
 			
 			private Function<JsonFactory, JsonFactory> getConfigurator(
-					final String fieldsParameterValue, ApiSerializationConfig serializationConfig) throws BadRequestException {
+					String fieldsParameterValue, ApiSerializationConfig serializationConfig) throws BadRequestException {
 				if (fieldsParameterValue.startsWith("/")) {
 					if (acceptJsonPointer) {
-						return new Function<JsonFactory, JsonFactory>() {
-							@Override
-							public JsonFactory apply(JsonFactory input) {
-								return new JsonPointerJsonFactory(input, fieldsParameterValue);
-							}
-						};
+						return input -> new JsonPointerJsonFactory(input, fieldsParameterValue);
 					} else {
 						throw new BadRequestException("Invalid fields parameter '" + fieldsParameterValue + "'", "invalidParameter", "global");
 					}
 				} else {
-					final FieldsExpression fieldsExpression = FieldsExpression.parse(fieldsParameterValue);
+					FieldsExpression fieldsExpression = FieldsExpression.parse(fieldsParameterValue);
 					if (resourceTreeRepositoryCache != null) {
 						FieldsExpressionTree resourceTree = resourceTreeRepositoryCache
 								.getUnchecked(methodConfig.getApiConfig().getApiKey())
@@ -177,12 +161,7 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 							throw new BadRequestException("Invalid field selection '" + fieldsParameterValue + "'", "invalidParameter", "global");
 						}
 					}
-					return new Function<JsonFactory, JsonFactory>() {
-						@Override
-						public JsonFactory apply(JsonFactory input) {
-							return new PartialResponseJsonFactory(input, fieldsExpression.getFilterTree());
-						}
-					};
+					return input -> new PartialResponseJsonFactory(input, fieldsExpression.getFilterTree());
 				}
 			}
 		};

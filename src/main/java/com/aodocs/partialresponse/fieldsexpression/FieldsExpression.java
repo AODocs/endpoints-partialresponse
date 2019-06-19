@@ -21,10 +21,8 @@ package com.aodocs.partialresponse.fieldsexpression;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -37,39 +35,28 @@ public final class FieldsExpression {
 	}
 	
 	private final String fieldExpression;
-	private final FluentIterable<ImmutableList<String>> fieldsExpressionPaths;
+	private final List<ImmutableList<String>> fieldsExpressionPaths;
 	
 	private FieldsExpression(String fieldsExpression) {
 		this.fieldExpression = fieldsExpression;
 		this.fieldsExpressionPaths = Parser.parse(fieldsExpression);
 	}
 	
-	public boolean isValidAgainst(final FieldsExpressionTree schema) {
-		return asPathNodes().allMatch(new Predicate<FieldsExpressionNode>() {
-			@Override
-			public boolean apply(FieldsExpressionNode root) {
-				return schema.contains(new FieldsExpressionTree(root));
-			}
-		});
+	public boolean isValidAgainst(FieldsExpressionTree schema) {
+		return asPathNodes().allMatch(root -> schema.contains(new FieldsExpressionTree(root)));
 	}
 	
-	private FluentIterable<FieldsExpressionNode> asPathNodes() {
-		return fieldsExpressionPaths.transform(new Function<ImmutableList<String>, FieldsExpressionNode>() {
-			@Override
-			public FieldsExpressionNode apply(ImmutableList<String> path) {
-				FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
-				builder.getOrAddBranch(path);
-				return builder.getNode();
-			}
+	private Stream<FieldsExpressionNode> asPathNodes() {
+		return fieldsExpressionPaths.stream().map(path -> {
+			FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
+			builder.getOrAddBranch(path);
+			return builder.getNode();
 		});
 	}
 	
 	public FieldsExpressionTree getFilterTree() {
 		FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
-		FluentIterable<ImmutableList<String>> filteredPaths = retainLivePaths(fieldsExpressionPaths);
-		for (ImmutableList<String> livePath : filteredPaths) {
-			builder.getOrAddBranch(livePath);
-		}
+		retainLivePaths(fieldsExpressionPaths).forEach(builder::getOrAddBranch);
 		return new FieldsExpressionTree(builder.getNode());
 	}
 	
@@ -80,8 +67,8 @@ public final class FieldsExpression {
 	 * @param paths
 	 * @return only the live paths
 	 */
-	private FluentIterable<ImmutableList<String>> retainLivePaths(final FluentIterable<ImmutableList<String>> paths) {
-		final List<ImmutableList<String>> redundantPaths = new ArrayList<>();
+	private Stream<ImmutableList<String>> retainLivePaths(List<ImmutableList<String>> paths) {
+		List<ImmutableList<String>> redundantPaths = new ArrayList<>();
 		for (int pathIndex = 0; pathIndex < paths.size() - 1; pathIndex++) {
 			ImmutableList<String> path = paths.get(pathIndex);
 			for (int anotherPathIndex = pathIndex + 1; anotherPathIndex < paths.size(); anotherPathIndex++) {
@@ -95,12 +82,7 @@ public final class FieldsExpression {
 				}
 			}
 		}
-		return paths.filter(new Predicate<ImmutableList<String>>() {
-			@Override
-			public boolean apply(ImmutableList<String> path) {
-				return !redundantPaths.contains(path);
-			}
-		});
+		return paths.stream().filter(path -> !redundantPaths.contains(path));
 	}
 	
 	@Override

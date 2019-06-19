@@ -65,7 +65,7 @@ public abstract class BaseEndpointsServletTest {
 		when(request.getRequestURI()).thenReturn("test/v1/test");
 		
 		HttpServletResponse response = mock(HttpServletResponse.class);
-		final StringWriter stringWriter = new StringWriter();
+		StringWriter stringWriter = new StringWriter();
 		when(response.getWriter()).thenReturn(new PrintWriter(stringWriter));
 		when(response.getOutputStream()).thenReturn(new ServletOutputStream() {
 			@Override
