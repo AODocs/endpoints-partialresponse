@@ -60,12 +60,20 @@ public final class FieldsExpression {
 	public boolean isValidAgainst(FieldsExpressionTree schema) {
 		//we check validity with all paths, as collapsePaths might have removed invalid paths
 		return allPaths.stream()
-				.map(path -> {
-					FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
-					builder.getOrAddBranch(path);
-					return builder.getNode();
-				})
-				.allMatch(root -> schema.contains(new FieldsExpressionTree(root)));
+				.map(path -> createTreeFromPath(path))
+				.allMatch(root -> schema.contains(root));
+	}
+
+	public boolean contains(FieldsExpressionTree testedTree) {
+		return collapsedPaths.stream()
+				.map(path -> createTreeFromPath(path))
+				.anyMatch(root -> root.contains(testedTree) || testedTree.contains(root));
+	}
+
+	private static FieldsExpressionTree createTreeFromPath(ImmutableList<String> path) {
+		FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
+		builder.getOrAddBranch(path);
+		return new FieldsExpressionTree(builder.getNode());
 	}
 
 	/**

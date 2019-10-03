@@ -42,21 +42,8 @@ class RetainedFieldCheckerImpl implements RetainedFieldChecker {
   @Override
   public boolean isRetained(String fieldPath) {
     checkFieldPath(fieldPath);
-    List<String> toCheck = SPLITTER.splitToList(fieldPath);
-    return fieldsExpression.getFieldPaths().stream()
-        .anyMatch(path -> checkCommonPrefix(path, toCheck));
-  }
-
-  private boolean checkCommonPrefix(List<String> expressionPath, List<String> toCheck) {
-    int aIndex = 0;
-    int bIndex = 0;
-    while (aIndex < expressionPath.size() && bIndex < toCheck.size()) {
-      String a = expressionPath.get(aIndex++);
-      String b = toCheck.get(bIndex++);
-      if (!a.equals(b) && !"*".equals(a))
-        return false;
-    }
-    return true;
+    FieldsExpression testedExpression = FieldsExpression.parse(fieldPath);
+    return fieldsExpression.contains(testedExpression.getFilterTree());
   }
 
   @Override
