@@ -35,7 +35,7 @@ public class RetainedFieldCheckerImplTest {
   private final String toCheck;
   private final boolean expected;
 
-  @Parameterized.Parameters(name = "{0},{1}")
+  @Parameterized.Parameters(name = "{0} - {1} => {2}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{
         //no need to check *, as everything matches
@@ -70,7 +70,7 @@ public class RetainedFieldCheckerImplTest {
         {"foo/*/bar", "bar", false},
         {"foo/*/bar", "foo/bar", true},
         {"foo/*/bar", "foo/baz/bar", true},
-        {"foo/*/bar", "foo/baz/baz/bar", true},
+        {"foo/*/bar", "foo/baz/baz/bar", false},
         {"foo/*/bar", "foo/baz/bar/baz", true},
         //all combined
         {"foo,bar/*,baz/*/baz", "foo", true},
@@ -79,7 +79,8 @@ public class RetainedFieldCheckerImplTest {
         {"foo,bar/*,baz/*/baz", "bar/foo", true},
         {"foo,bar/*,baz/*/baz", "baz", true},
         {"foo,bar/*,baz/*/baz", "baz/foo", true},
-        {"foo,bar/*,baz/*/baz", "baz/foo/bar", true},
+        {"foo,bar/*,baz/*/baz", "baz/foo/baz", true},
+        {"foo,bar/*,baz/*/baz", "baz/foo/bar", false},
     });
   }
 

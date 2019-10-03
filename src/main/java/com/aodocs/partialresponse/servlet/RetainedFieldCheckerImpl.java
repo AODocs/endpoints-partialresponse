@@ -23,7 +23,6 @@ import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
@@ -48,16 +47,13 @@ class RetainedFieldCheckerImpl implements RetainedFieldChecker {
         .anyMatch(path -> checkCommonPrefix(path, toCheck));
   }
 
-  private boolean checkCommonPrefix(ImmutableList<String> expressionPath, List<String> toCheck) {
+  private boolean checkCommonPrefix(List<String> expressionPath, List<String> toCheck) {
     int aIndex = 0;
     int bIndex = 0;
     while (aIndex < expressionPath.size() && bIndex < toCheck.size()) {
       String a = expressionPath.get(aIndex++);
       String b = toCheck.get(bIndex++);
-      //as intermediate wildcards might check multiple levels at once, we return true
-      if ("*".equals(a))
-        return true;
-      if (!a.equals(b))
+      if (!a.equals(b) && !"*".equals(a))
         return false;
     }
     return true;
