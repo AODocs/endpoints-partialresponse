@@ -29,11 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class RetainedFieldCheckerImplTest {
-
-  private final String fieldsExpression;
-  private final String toCheck;
-  private final boolean expected;
+public class RequestedFieldsImplTest {
 
   @Parameterized.Parameters(name = "{0} - {1} => {2}")
   public static Collection<Object[]> data() {
@@ -84,18 +80,22 @@ public class RetainedFieldCheckerImplTest {
     });
   }
 
-  public RetainedFieldCheckerImplTest(String fieldsExpression, String toCheck,
-      boolean expected) {
+  private final String fieldsExpression;
+  private final String fieldPathToCheck;
+  private final boolean expectedIsRequested;
+
+  public RequestedFieldsImplTest(String fieldsExpression, String fieldPathToCheck,
+      boolean expectedIsRequested) {
     this.fieldsExpression = fieldsExpression;
-    this.toCheck = toCheck;
-    this.expected = expected;
+    this.fieldPathToCheck = fieldPathToCheck;
+    this.expectedIsRequested = expectedIsRequested;
   }
 
   @Test
-  public void isIncludedInPartialResponse() {
+  public void isRequested() {
     FieldsExpression fieldsExpression = FieldsExpression.parse(this.fieldsExpression);
-    boolean retained = new RetainedFieldCheckerImpl(fieldsExpression).isRetained(toCheck);
-    assertEquals(expected, retained);
+    boolean isRequested = new RequestedFieldsImpl(fieldsExpression).isRequested(fieldPathToCheck);
+    assertEquals(expectedIsRequested, isRequested);
   }
 
 }

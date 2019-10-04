@@ -60,13 +60,13 @@ public final class FieldsExpression {
 	public boolean isValidAgainst(FieldsExpressionTree schema) {
 		//we check validity with all paths, as collapsePaths might have removed invalid paths
 		return allPaths.stream()
-				.map(path -> createTreeFromPath(path))
-				.allMatch(root -> schema.contains(root));
+				.map(FieldsExpression::createTreeFromPath)
+				.allMatch(schema::contains);
 	}
 
-	public boolean contains(FieldsExpressionTree testedTree) {
+	public boolean overlapsWith(FieldsExpressionTree testedTree) {
 		return collapsedPaths.stream()
-				.map(path -> createTreeFromPath(path))
+				.map(FieldsExpression::createTreeFromPath)
 				.anyMatch(root -> root.contains(testedTree) || testedTree.contains(root));
 	}
 
@@ -81,7 +81,7 @@ public final class FieldsExpression {
 	 * Only live paths are retained in the result.
 	 *
 	 * @param paths all paths
-	 * @return the collpased paths
+	 * @return the collapsed paths
 	 */
 	private Stream<ImmutableList<String>> collapsePaths(List<ImmutableList<String>> paths) {
 		List<ImmutableList<String>> redundantPaths = new ArrayList<>();

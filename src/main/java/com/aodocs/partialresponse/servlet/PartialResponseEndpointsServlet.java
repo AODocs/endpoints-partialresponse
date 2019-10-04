@@ -78,17 +78,19 @@ import javax.servlet.http.HttpServletRequest;
  * <li>The JSON pointer support is not enabled, set the "acceptJsonPointer" servlet init parameter to true
  * to activate it.</li>
  * 
- * If the response is filtered by a regular fields expression (not using JSON Pointer), then
- * a {@link RetainedFieldChecker} instance is set as a request attribute with name
- * {@link RetainedFieldChecker#REQUEST_ATTRIBUTE_NAME}. This can be used by an API implementation
- * to implement optimization based on the requested fields.
+ * If the response is filtered by a standard fields expression (not using JSON Pointer), then
+ * a {@link RequestedFields} instance is accessible with 
+ * {@link PartialResponseEndpointsServlet#getRequestedFields}. This can be used by an API
+ * implementation to perform optimization based on the requested fields.
  *
  */
 public class PartialResponseEndpointsServlet extends EndpointsServlet {
+
+	public static final String REQUESTED_FIELDS_ATTR_NAME = "endpoints.partialReponse.requestedFields";
 	
 	static final String ACCEPT_JSON_POINTER_INIT_PARAM = "acceptJsonPointer";
 	static final String CHECK_FIELDS_EXPRESSION_INIT_PARAM = "checkFieldsExpression";
-	
+
 	private LoadingCache<ApiKey, ResourceTreeRepository> resourceTreeRepositoryCache;
 	private boolean acceptJsonPointer;
 	private boolean checkFieldsExpression;
@@ -174,12 +176,23 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 							throw new BadRequestException("Invalid field selection '" + fieldsParameterValue + "'", "invalidParameter", "global");
 						}
 					}
-					RetainedFieldCheckerImpl fieldsChecker = new RetainedFieldCheckerImpl(fieldsExpression);
-					request.setAttribute(RetainedFieldChecker.REQUEST_ATTRIBUTE_NAME, fieldsChecker);
+					RequestedFieldsImpl requestedFields = new RequestedFieldsImpl(fieldsExpression);
+					request.setAttribute(REQUESTED_FIELDS_ATTR_NAME, requestedFields);
 					return input -> new PartialResponseJsonFactory(input, fieldsExpression.getFilterTree());
 				}
 			}
 		};
+	}
+	
+	/**
+	 * If the response will be filtered by a fields expression, returns an instance of
+	 * {@link RequestedFields} that can be used to perform checks on fields to be returned.
+	 * 
+	 * @param request a HttpServletRequest
+	 * @return a requested fields instance (null if no filtering is performed)
+	 */
+	public static RequestedFields getRequestedFields(HttpServletRequest request) {
+		return (RequestedFields) request.getAttribute(REQUESTED_FIELDS_ATTR_NAME);
 	}
 	
 }

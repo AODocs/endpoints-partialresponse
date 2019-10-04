@@ -27,10 +27,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class RetainedFieldCheckerImplErrorTest {
+public class RequestedFieldsImplErrorTest {
 
-  private static final RetainedFieldCheckerImpl CHECKER 
-      = new RetainedFieldCheckerImpl(FieldsExpression.parse("foo"));
+  private static final RequestedFieldsImpl REQUESTED_FIELDS 
+      = new RequestedFieldsImpl(FieldsExpression.parse("foo"));
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() {
@@ -47,15 +47,15 @@ public class RetainedFieldCheckerImplErrorTest {
     });
   }
 
-  private final String toCheck;
+  private final String fieldPath;
 
-  public RetainedFieldCheckerImplErrorTest(String toCheck) {
-    this.toCheck = toCheck;
+  public RequestedFieldsImplErrorTest(String fieldPath) {
+    this.fieldPath = fieldPath;
   }
   
   @Test(expected = IllegalArgumentException.class)
-  public void nullFieldPath() {
-    CHECKER.isRetained(toCheck);
+  public void invalidFieldPath() {
+    REQUESTED_FIELDS.isRequested(fieldPath);
   }
 
 }

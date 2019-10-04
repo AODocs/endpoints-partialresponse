@@ -22,43 +22,40 @@ package com.aodocs.partialresponse.servlet;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
-class RetainedFieldCheckerImpl implements RetainedFieldChecker {
+class RequestedFieldsImpl implements RequestedFields {
 
   private final static CharMatcher SLASH_MATCHER = CharMatcher.is('/');
-  private final static Splitter SPLITTER = Splitter.on(SLASH_MATCHER).omitEmptyStrings();
   
   private final FieldsExpression fieldsExpression;
 
-  public RetainedFieldCheckerImpl(FieldsExpression fieldsExpression) {
+  public RequestedFieldsImpl(FieldsExpression fieldsExpression) {
     Preconditions.checkArgument(!fieldsExpression.getFilterTree().getRoot().isWildcard(),
         "PartialResponseFieldsChecker must not be used on wildcard expressions");
     this.fieldsExpression = fieldsExpression;
   }
 
   @Override
-  public boolean isRetained(String fieldPath) {
+  public boolean isRequested(String fieldPath) {
     checkFieldPath(fieldPath);
     FieldsExpression testedExpression = FieldsExpression.parse(fieldPath);
-    return fieldsExpression.contains(testedExpression.getFilterTree());
+    return fieldsExpression.overlapsWith(testedExpression.getFilterTree());
   }
 
   @Override
-  public RetainedFieldChecker startingFrom(String newRootPath) {
+  public RequestedFields startingFrom(String newRootPath) {
     checkFieldPath(newRootPath);
-    return new RetainedFieldChecker() {
+    return new RequestedFields() {
       @Override
-      public boolean isRetained(String fieldPath) {
-        return RetainedFieldCheckerImpl.this.isRetained(
+      public boolean isRequested(String fieldPath) {
+        return RequestedFieldsImpl.this.isRequested(
             newRootPath + "/" + fieldPath);
       }
 
       @Override
-      public RetainedFieldChecker startingFrom(String newRootPath2) {
-        return RetainedFieldCheckerImpl.this.startingFrom(
+      public RequestedFields startingFrom(String newRootPath2) {
+        return RequestedFieldsImpl.this.startingFrom(
             newRootPath + "/" + newRootPath2);
       }
     };
