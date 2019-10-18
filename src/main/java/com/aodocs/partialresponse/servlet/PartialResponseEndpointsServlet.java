@@ -19,12 +19,6 @@
  */
 package com.aodocs.partialresponse.servlet;
 
-import java.util.Optional;
-import java.util.function.Function;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-
 import com.aodocs.partialresponse.discovery.ResourceTreeRepository;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpression;
 import com.aodocs.partialresponse.fieldsexpression.FieldsExpressionTree;
@@ -59,9 +53,15 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
+import java.util.function.Function;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Enables JSON partial response based on "fields" query parameter.
+ * 
  * It supports two modes:<ul>
  * <li>If fields expression does not start with a /, the regular mode is enabled,
  * with very close behavior to
@@ -70,28 +70,38 @@ import com.google.common.collect.ImmutableList;
  * <li>If fields expression starts with a /, the <a href="https://tools.ietf.org/html/rfc6901">JSON Pointer</a>
  * mode is enabled. It only allows a single node selection, and does not support wildcards</li>
  * </ul>
+ * 
  * Initialization parameters:<ul>
  * <li>In regular mode, the fields expression is not checked against resource schema by default.
  *  To enable this features (available in Endpoints v1), set the "checkFieldsExpression"
  *  servlet init parameter to true.</li>
  * <li>The JSON pointer support is not enabled, set the "acceptJsonPointer" servlet init parameter to true
  * to activate it.</li>
- * </ul>
+ * 
+ * If the response is filtered by a standard fields expression (not using JSON Pointer), then
+ * a {@link RequestedFields} instance is accessible with 
+ * {@link PartialResponseEndpointsServlet#getRequestedFields}. This can be used by an API
+ * implementation to perform optimization based on the requested fields.
  *
  */
 public class PartialResponseEndpointsServlet extends EndpointsServlet {
+
+	public static final String REQUESTED_FIELDS_ATTR_NAME = "endpoints.partialReponse.requestedFields";
 	
 	static final String ACCEPT_JSON_POINTER_INIT_PARAM = "acceptJsonPointer";
 	static final String CHECK_FIELDS_EXPRESSION_INIT_PARAM = "checkFieldsExpression";
-	
+
 	private LoadingCache<ApiKey, ResourceTreeRepository> resourceTreeRepositoryCache;
 	private boolean acceptJsonPointer;
+	private boolean checkFieldsExpression;
 	
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		this.acceptJsonPointer = getBooleanInitParam(config, ACCEPT_JSON_POINTER_INIT_PARAM, false);
-		boolean checkFieldsExpression = getBooleanInitParam(config, CHECK_FIELDS_EXPRESSION_INIT_PARAM, false);
+		this.acceptJsonPointer = getBooleanInitParam(config, 
+				ACCEPT_JSON_POINTER_INIT_PARAM, false);
+		this.checkFieldsExpression = getBooleanInitParam(config, 
+				CHECK_FIELDS_EXPRESSION_INIT_PARAM, false);
 		if (checkFieldsExpression) {
 			resourceTreeRepositoryCache = CacheBuilder.newBuilder().build(new CacheLoader<ApiKey, ResourceTreeRepository>() {
 				private DiscoveryProvider discoveryProvider = createDiscoveryProvider();
@@ -128,13 +138,17 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 		return new EndpointsMethodHandler(getInitParameters(), getServletContext(), method, methodConfig, getSystemService()) {
 			@Override
 			protected ResultWriter createResultWriter(EndpointsContext context, ApiSerializationConfig serializationConfig) throws ServiceException {
-				String fieldsParameterValue = context.getRequest().getParameter(StandardParameters.FIELDS);
-				if (Strings.isNullOrEmpty(fieldsParameterValue)) {
+				HttpServletRequest request = context.getRequest();
+				String fieldsParameterValue = request.getParameter(StandardParameters.FIELDS);
+				if (Strings.isNullOrEmpty(fieldsParameterValue) || "*".equals(fieldsParameterValue)) {
 					return super.createResultWriter(context, serializationConfig);
 				}
-				Function<JsonFactory, JsonFactory> jsonFactoryConfigurator = getConfigurator(fieldsParameterValue, serializationConfig);
+				Function<JsonFactory, JsonFactory> jsonFactoryConfigurator 
+						= getConfigurator(fieldsParameterValue, serializationConfig, request);
 				
-				return new RestResponseResultWriter(context.getResponse(), serializationConfig, StandardParameters.shouldPrettyPrint(context), getInitParameters().isAddContentLength(), getInitParameters().isExceptionCompatibilityEnabled()) {
+				return new RestResponseResultWriter(context.getResponse(), serializationConfig, 
+						StandardParameters.shouldPrettyPrint(context), getInitParameters().isAddContentLength(),
+						getInitParameters().isExceptionCompatibilityEnabled()) {
 					@Override
 					protected ObjectWriter configureWriter(ObjectWriter objectWriter) {
 						return objectWriter.with(jsonFactoryConfigurator.apply(objectWriter.getFactory()));
@@ -143,7 +157,8 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 			}
 			
 			private Function<JsonFactory, JsonFactory> getConfigurator(
-					String fieldsParameterValue, ApiSerializationConfig serializationConfig) throws BadRequestException {
+					String fieldsParameterValue, ApiSerializationConfig serializationConfig,
+					HttpServletRequest request) throws BadRequestException {
 				if (fieldsParameterValue.startsWith("/")) {
 					if (acceptJsonPointer) {
 						return input -> new JsonPointerJsonFactory(input, fieldsParameterValue);
@@ -152,7 +167,7 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 					}
 				} else {
 					FieldsExpression fieldsExpression = FieldsExpression.parse(fieldsParameterValue);
-					if (resourceTreeRepositoryCache != null) {
+					if (checkFieldsExpression) {
 						FieldsExpressionTree resourceTree = resourceTreeRepositoryCache
 								.getUnchecked(methodConfig.getApiConfig().getApiKey())
 								.getResourceTree(Types.getSimpleName(method.getReturnType(), serializationConfig));
@@ -161,10 +176,23 @@ public class PartialResponseEndpointsServlet extends EndpointsServlet {
 							throw new BadRequestException("Invalid field selection '" + fieldsParameterValue + "'", "invalidParameter", "global");
 						}
 					}
+					RequestedFieldsImpl requestedFields = new RequestedFieldsImpl(fieldsExpression);
+					request.setAttribute(REQUESTED_FIELDS_ATTR_NAME, requestedFields);
 					return input -> new PartialResponseJsonFactory(input, fieldsExpression.getFilterTree());
 				}
 			}
 		};
+	}
+	
+	/**
+	 * If the response will be filtered by a fields expression, returns an instance of
+	 * {@link RequestedFields} that can be used to perform checks on fields to be returned.
+	 * 
+	 * @param request a HttpServletRequest
+	 * @return a requested fields instance (null if no filtering is performed)
+	 */
+	public static RequestedFields getRequestedFields(HttpServletRequest request) {
+		return (RequestedFields) request.getAttribute(REQUESTED_FIELDS_ATTR_NAME);
 	}
 	
 }

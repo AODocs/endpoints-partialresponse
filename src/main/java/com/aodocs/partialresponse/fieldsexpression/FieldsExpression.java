@@ -19,14 +19,15 @@
  */
 package com.aodocs.partialresponse.fieldsexpression;
 
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableList;
-
 /**
- * Describes a fields expression for partial response, as described there: https://developers.google.com/drive/api/v3/performance#partial-response
+ * Describes a fields expression for partial response, as described there: 
+ * https://developers.google.com/drive/api/v3/performance#partial-response
  */
 public final class FieldsExpression {
 	
@@ -34,40 +35,55 @@ public final class FieldsExpression {
 		return new FieldsExpression(fieldsExpression);
 	}
 	
-	private final String fieldExpression;
-	private final List<ImmutableList<String>> fieldsExpressionPaths;
+	private final String fieldsExpression;
+	private final List<ImmutableList<String>> allPaths;
+	private final List<ImmutableList<String>> collapsedPaths;
+	private final FieldsExpressionTree tree;
 	
 	private FieldsExpression(String fieldsExpression) {
-		this.fieldExpression = fieldsExpression;
-		this.fieldsExpressionPaths = Parser.parse(fieldsExpression);
-	}
-	
-	public boolean isValidAgainst(FieldsExpressionTree schema) {
-		return asPathNodes().allMatch(root -> schema.contains(new FieldsExpressionTree(root)));
-	}
-	
-	private Stream<FieldsExpressionNode> asPathNodes() {
-		return fieldsExpressionPaths.stream().map(path -> {
-			FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
-			builder.getOrAddBranch(path);
-			return builder.getNode();
-		});
-	}
-	
-	public FieldsExpressionTree getFilterTree() {
+		this.fieldsExpression = fieldsExpression;
+		this.allPaths = Parser.parse(fieldsExpression);
 		FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
-		retainLivePaths(fieldsExpressionPaths).forEach(builder::getOrAddBranch);
+		this.collapsedPaths = collapsePaths(allPaths)
+				.peek(builder::getOrAddBranch).collect(Collectors.toList());
+		this.tree = new FieldsExpressionTree(builder.getNode());
+	}
+
+	public List<ImmutableList<String>> getFieldPaths() {
+		return collapsedPaths;
+	}
+
+	public FieldsExpressionTree getFilterTree() {
+		return tree;
+	}
+
+	public boolean isValidAgainst(FieldsExpressionTree schema) {
+		//we check validity with all paths, as collapsePaths might have removed invalid paths
+		return allPaths.stream()
+				.map(FieldsExpression::createTreeFromPath)
+				.allMatch(schema::contains);
+	}
+
+	public boolean overlapsWith(FieldsExpressionTree testedTree) {
+		return collapsedPaths.stream()
+				.map(FieldsExpression::createTreeFromPath)
+				.anyMatch(root -> root.contains(testedTree) || testedTree.contains(root));
+	}
+
+	private static FieldsExpressionTree createTreeFromPath(ImmutableList<String> path) {
+		FieldsExpressionNode.Builder builder = FieldsExpressionNode.Builder.createRoot();
+		builder.getOrAddBranch(path);
 		return new FieldsExpressionTree(builder.getNode());
 	}
-	
+
 	/**
-	 * A path p1 is dead if there another path p2 with a terminal wildcard that is a prefix of p1.
-	 * Only live paths are retained.
+	 * A path p1 is "dead" if there another path p2 with a terminal wildcard that is a prefix of p1.
+	 * Only live paths are retained in the result.
 	 *
-	 * @param paths
-	 * @return only the live paths
+	 * @param paths all paths
+	 * @return the collapsed paths
 	 */
-	private Stream<ImmutableList<String>> retainLivePaths(List<ImmutableList<String>> paths) {
+	private Stream<ImmutableList<String>> collapsePaths(List<ImmutableList<String>> paths) {
 		List<ImmutableList<String>> redundantPaths = new ArrayList<>();
 		for (int pathIndex = 0; pathIndex < paths.size() - 1; pathIndex++) {
 			ImmutableList<String> path = paths.get(pathIndex);
@@ -87,6 +103,6 @@ public final class FieldsExpression {
 	
 	@Override
 	public String toString() {
-		return fieldExpression;
+		return fieldsExpression;
 	}
 }
