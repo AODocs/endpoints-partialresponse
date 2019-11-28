@@ -114,6 +114,19 @@
         </repository>
     </repositories>
 
+    <distributionManagement>
+        <repository>
+            <id>artifactory</id>
+            <name>libs-release</name>
+            <url>https://aodocs.jfrog.io/aodocs/libs-release</url>
+        </repository>
+        <snapshotRepository>
+            <id>artifactory</id>
+            <name>libs-snapshot</name>
+            <url>https://aodocs.jfrog.io/aodocs/libs-snapshot</url>
+        </snapshotRepository>
+    </distributionManagement>
+    
     <build>
         <plugins>
             <plugin>
