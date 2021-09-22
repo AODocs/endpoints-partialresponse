@@ -77,6 +77,7 @@ import javax.servlet.http.HttpServletRequest;
  *  servlet init parameter to true.</li>
  * <li>The JSON pointer support is not enabled, set the "acceptJsonPointer" servlet init parameter to true
  * to activate it.</li>
+ * </ul>
  * 
  * If the response is filtered by a standard fields expression (not using JSON Pointer), then
  * a {@link RequestedFields} instance is accessible with 

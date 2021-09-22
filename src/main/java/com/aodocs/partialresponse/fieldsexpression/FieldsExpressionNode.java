@@ -158,7 +158,7 @@ public class FieldsExpressionNode {
 		 * Creates a new root node with the provided children.
 		 * Example: ofChildren("a", "b", "c") ⇒ root → a, b, c
 		 *
-		 * @param childValues
+		 * @param childValues the child values under the root
 		 * @return the root node containing the children
 		 */
 		public static Builder withChildren(String... childValues) {
