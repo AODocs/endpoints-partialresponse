@@ -34,11 +34,11 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <endpoints-framework.version>2.4.1</endpoints-framework.version>
+        <endpoints-framework.version>2.5.0</endpoints-framework.version>
         <!--Should be compatible with version from endpoints-framework-->
-        <jackson.version>2.10.0</jackson.version>
-        <http-client.version>1.25.0</http-client.version>
-        <antlr4.version>4.7.2</antlr4.version>
+        <jackson.version>2.12.5</jackson.version>
+        <http-client.version>1.32.1</http-client.version>
+        <antlr4.version>4.9.2</antlr4.version>
 
         <endpoints-partialresponse.scm.connection>git@github.com:AODocs/endpoints-partialresponse.git</endpoints-partialresponse.scm.connection>
         <endpoints-partialresponse.scm.url>https://github.com/AODocs/endpoints-partialresponse</endpoints-partialresponse.scm.url>
@@ -77,26 +77,26 @@
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-discovery</artifactId>
-            <version>v1-rev94-${http-client.version}</version>
+            <version>v1-rev20200806-${http-client.version}</version>
         </dependency>
         
         <!--Testing-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.1.0</version>
+            <version>3.12.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>nl.jqno.equalsverifier</groupId>
             <artifactId>equalsverifier</artifactId>
-            <version>3.1.10</version>
+            <version>3.7.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -130,6 +130,26 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.6</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-maven-plugin</artifactId>
                 <version>${antlr4.version}</version>
@@ -147,7 +167,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.21.0</version>
+                <version>3.0.0-M5</version>
                 <configuration>
                     <excludes>
                         <exclude>**/it/*</exclude>
@@ -174,7 +194,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-                <version>1.16</version>
+                <version>2.0.0</version>
                 <configuration>
                     <licenseName>apache_v2</licenseName>
                     <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
