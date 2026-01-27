@@ -38,7 +38,7 @@
         <!--Should be compatible with version from endpoints-framework-->
         <jackson.version>2.12.5</jackson.version>
         <http-client.version>1.32.1</http-client.version>
-        <antlr4.version>4.9.2</antlr4.version>
+        <antlr4.version>4.13.0</antlr4.version>
 
         <endpoints-partialresponse.scm.connection>git@github.com:AODocs/endpoints-partialresponse.git</endpoints-partialresponse.scm.connection>
         <endpoints-partialresponse.scm.url>https://github.com/AODocs/endpoints-partialresponse</endpoints-partialresponse.scm.url>
